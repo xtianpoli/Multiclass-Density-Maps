@@ -274,20 +274,19 @@ export interface ReencodingSpec {
 }
 
 export class AssemblySpec {
-    mix: "none" | "invmin" | "mean" | "max" | "blend" |
-        "weaving" | "propline" | "hatching" | "separate" | "glyph" | "dotdensity" | "time" = "mean";
-
-    // blend
-    mixing: "additive" | "multiplicative" = "additive";
+    type: "none" | "invmin" | "mean" | "max" | "add" | "multiply" |
+        "weaving" | "propline" | "hatching" | "separate" |
+        "glyph" | "dotdensity" | "time" = "mean";
 
     // weaving*
-    shape: "random" | "square" | "hex" | "tri" = "random"
+    shape: "square" | "hex" | "tri" = "square";
+    random: boolean = false;
 
     // weaving & dotdensity
     size: number = 8;
 
     // time
-    interval: number = 0.6;
+    duration: number = 0.6;
 
     // invmin
     threshold: number = 1;
@@ -469,7 +468,7 @@ export class Config {
             this.background = this.spec.background;
     }
     private parsePreprocess() {
-        if("pre" in this.spec)
+        if ("pre" in this.spec)
             this.preprocess = <PreprocessSpec>this.spec.pre;
     }
     private parseData() {
@@ -493,13 +492,41 @@ export class Config {
             this.rebin = new RebinSpec(this.spec.rebin);
     }
     private parseAssembly() {
-        let spec = this.spec.assembly || this.spec.compose;
+        let spec = this.spec.assembly || this.spec.compose; // backward compatibility
+        if (spec.mix && !spec.type) spec.type = spec.mix; // backward compatibility
+        if (spec.mixing && !spec.blending) spec.blending = spec.mixing; // backward compatibility
+        if (spec.type == "weavingrandom") { // backward compatibility
+            spec.type = "weaving";
+            spec.shape = "square";
+            spec.random = true;
+        }
+        else if(spec.type == "weavingsquare") {
+            spec.type = "weaving";
+            spec.shape = "square";
+        }
+        else if(spec.type == "weavingtri") {
+            spec.type = "weaving";
+            spec.shape = "tri";
+        }
+        else if(spec.type == "weavinghex") {
+            spec.type = "weaving";
+            spec.shape = "hex";
+        }
+        else if(spec.type == "weaving" && spec.shape == "random") {
+            spec.shape = "square";
+            spec.random = true;
+        }
+
+        if(spec.type == "blend") {
+            if(spec.blending == "multiplicative") spec.type = "multiply";
+            else if(spec.blending == "additive") spec.type = "add";
+        }
         this.assembly = new AssemblySpec(spec);
     }
     private parseRescale() {
         if (this.spec.rescale)
             this.scale = new ScaleSpec(this.spec.rescale);
-        else if(this.style && this.style.scale)
+        else if (this.style && this.style.scale)
             this.scale = this.style.scale;
     }
     private parseLegend() {

@@ -12,7 +12,7 @@
         crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/fontawesome.css" integrity="sha384-1rquJLNOM3ijoueaaeS5m+McXPJCGdr5HcA03/VHXxcp2kX2sUrQDmFc3jR5i/C7"
         crossorigin="anonymous">
-    
+
     <style>
         @media (min-width: 1400px) {
             .container {
@@ -56,8 +56,8 @@
                 <img src="logo.png" width="30" height="30" class="d-inline-block align-top" alt="Multiclass Density Map Logo">
                 Multiclass Density Map Gallery
             </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-                aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"
+                aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -178,18 +178,7 @@
                     }
                 });
 
-
-            render('Random Rectangular Weaving',
-                {
-                    "data": { "url": "mn_data.json" },
-                    "compose": {
-                        "mix": "weaving",
-                        "shape": "random"
-                    }
-                });
-
-
-            render('Square Rectangular Weaving',
+            render('Square Weaving',
                 {
                     "data": { "url": "mn_data.json" },
                     "compose": {
@@ -198,7 +187,17 @@
                     }
                 });
 
-            render('Linear Color Scale Hex',
+            render('Random Square Weaving',
+                {
+                    "data": { "url": "mn_data.json" },
+                    "compose": {
+                        "mix": "weaving",
+                        "shape": "square",
+                        "random": true
+                    }
+                });
+
+            render('Hexagonal Weaving',
                 {
                     "description": "multivariate normal data",
                     "data": { "url": "mn_data.json" },
@@ -208,12 +207,13 @@
                     }
                 });
 
-            render('EquiDepth Color Scale Triangles',
+            render('Random Trianglular Weaving',
                 {
                     "data": { "url": "mn_data.json" },
                     "compose": {
                         "mix": "weaving",
-                        "shape": "tri"
+                        "shape": "tri",
+                        "random": true
                     },
                     "rescale": {
                         "type": "equidepth"
@@ -283,7 +283,7 @@
                 },
                 "compose": {
                     "mix": "blend",
-                    "mixing": "multiplicative"
+                    "blending": "multiplicative"
                 }
             });
 
@@ -298,7 +298,7 @@
                     "compose": {
                         "mix": "propline",
                         "size": 4,
-                        "widthprop": "percent",
+                        "widthprop": 'percent',
                         "colprop": true
                     }
                 });
@@ -314,7 +314,7 @@
                     "compose": {
                         "mix": "hatching",
                         "size": 2,
-                        "widthprop": 1.0,
+                        "widthprop": 1,
                         "colprop": false
                     }
                 });
@@ -363,7 +363,7 @@
             }, true);
 
             render('Census Data (Class Reordered and Renamed)', {
-                "data": { 
+                "data": {
                     "url": "census.snappy_data.json"
                 },
                 "style": {
@@ -490,7 +490,7 @@
                 },
                 "compose": {
                     "mix": "blend",
-                    "mixing": "multiplicative"
+                    "blending": "multiplicative"
                 },
                 "rescale": {
                     "type": "log"

@@ -96,7 +96,7 @@ export default class Interpreter {
     public interpret() {
         // create class buffers first
         this.classBuffers = this.config.getDataBuffers().map(dataBuffer => new ClassBuffer(dataBuffer));
-;
+        ;
 
         this.computePreprocess();
 
@@ -141,7 +141,7 @@ export default class Interpreter {
     }
 
     private computePreprocess() {
-        if(this.config.preprocess && this.config.preprocess.gaussian) {
+        if (this.config.preprocess && this.config.preprocess.gaussian) {
             this.classBuffers.forEach(cb => {
                 cb.dataBuffer = cb.dataBuffer.blur(this.config.preprocess!.gaussian);
             });
@@ -154,21 +154,21 @@ export default class Interpreter {
         if (config.background)
             this.background = config.background;
 
-        if(config.style) {
-            if(config.style.classes) {
-                if(config.style.classes.length != this.classBuffers!.length) {
+        if (config.style) {
+            if (config.style.classes) {
+                if (config.style.classes.length != this.classBuffers!.length) {
                     throw new Error(`the length of the classes does not match ${config.style.classes.length} != ${this.classBuffers!.length}`);
                 }
 
                 let buffers = config.style.classes.map(cl => {
                     let buffer = this.classBuffers!.find(cb => cb.name === cl.name);
 
-                    if(!buffer)
+                    if (!buffer)
                         throw new Error(`cannot find a class buffer with name ${cl}`);
 
                     buffer.name = cl.alias || buffer.name;
-                    if(cl.color0) buffer.color0 = Color.parse(cl.color0);
-                    if(cl.color1) buffer.color1 = Color.parse(cl.color1);
+                    if (cl.color0) buffer.color0 = Color.parse(cl.color0);
+                    if (cl.color1) buffer.color1 = Color.parse(cl.color1);
 
                     return buffer;
                 })
@@ -178,8 +178,8 @@ export default class Interpreter {
         }
 
         this.classBuffers.forEach((cb, i) => {
-            if(cb.color0 == Color.None) cb.color0 = Color.White;
-            if(cb.color1 == Color.None) cb.color1 = Color.Category10[i % Color.Category10.length];
+            if (cb.color0 == Color.None) cb.color0 = Color.White;
+            if (cb.color1 == Color.None) cb.color1 = Color.Category10[i % Color.Category10.length];
         })
 
         this.bufferNames = this.classBuffers.map(cb => cb.name);
@@ -293,37 +293,31 @@ export default class Interpreter {
     private computeAssembly(context = {}) {
         let assemblyConfig = this.config.assembly!;
 
-        if (assemblyConfig.mix === "max")
+        if (assemblyConfig.type === "max")
             this.assemble = Assembly.max;
-        else if (assemblyConfig.mix === "mean")
+        else if (assemblyConfig.type === "mean")
             this.assemble = Assembly.mean;
-        else if (assemblyConfig.mix === "invmin")
+        else if (assemblyConfig.type === "invmin")
             this.assemble = Assembly.invmin;
-        else if (assemblyConfig.mix === "blend") {
-            if (assemblyConfig.mixing === "multiplicative")
-                this.assemble = Assembly.multiplicativeMix;
-            else
-                this.assemble = Assembly.additiveMix;
-        }
-        else if (assemblyConfig.mix === "weaving" && assemblyConfig.shape == "random")
-            this.masks = Weaving.randomMasks(this.n,
-                assemblyConfig.size,
-                this.width, this.height);
-        else if (assemblyConfig.mix === "weaving" && assemblyConfig.shape == "square")
+        else if (assemblyConfig.type === "multiply")
+            this.assemble = Assembly.multiply;
+        else if (assemblyConfig.type === "add")
+            this.assemble = Assembly.add;
+        else if (assemblyConfig.type === "weaving" && assemblyConfig.shape == "square")
             this.masks = Weaving.squareMasks(this.n,
                 assemblyConfig.size,
-                this.width, this.height);
-        else if (assemblyConfig.mix === "weaving" && assemblyConfig.shape == "hex")
+                this.width, this.height, assemblyConfig.random);
+        else if (assemblyConfig.type === "weaving" && assemblyConfig.shape == "hex")
             this.masks = Weaving.hexMasks(this.n,
                 assemblyConfig.size,
-                this.width, this.height);
-        else if (assemblyConfig.mix === "weaving" && assemblyConfig.shape == "tri")
+                this.width, this.height, assemblyConfig.random);
+        else if (assemblyConfig.type === "weaving" && assemblyConfig.shape == "tri")
             this.masks = Weaving.triangleMasks(this.n,
                 assemblyConfig.size,
-                this.width, this.height);
+                this.width, this.height, assemblyConfig.random);
     }
 
-    private setup(canvas: HTMLCanvasElement, width:number, height:number) {
+    private setup(canvas: HTMLCanvasElement, width: number, height: number) {
         canvas.style.width = `${width}px`;
         canvas.style.height = `${height}px`;
 
@@ -337,7 +331,7 @@ export default class Interpreter {
         let assemblyConfig = this.config.assembly!;
         let promises = [];
 
-        if (assemblyConfig.mix === "separate") { // small multiples
+        if (assemblyConfig.type === "separate") { // small multiples
             this.image = this.classBuffers.map((b) => new Image(this.width, this.height));
             for (let tile of this.tiles) {
                 this.classBuffers.forEach((derivedBuffer, i) => {
@@ -346,7 +340,7 @@ export default class Interpreter {
                 });
             }
         }
-        else if (assemblyConfig.mix === "time") { // time multiplexing
+        else if (assemblyConfig.type === "time") { // time multiplexing
             this.image = this.classBuffers.map((b) => new Image(this.width, this.height));
             for (let tile of this.tiles) {
                 this.classBuffers.forEach((derivedBuffer, i) => {
@@ -360,7 +354,7 @@ export default class Interpreter {
         }
 
         // Need the tiles to compute dot density plots
-        if (assemblyConfig.mix === "dotdensity") {
+        if (assemblyConfig.type === "dotdensity") {
             let size = assemblyConfig.size;
 
             // create one mask per databuffer
@@ -455,7 +449,7 @@ export default class Interpreter {
                 });
             }
         }
-        else if (assemblyConfig.mix === "propline") {
+        else if (assemblyConfig.type === "propline") {
             for (let tile of this.tiles) {
                 let hatch = Assembly.hatch(tile, this.classBuffers, tile.dataValues, {
                     thickness: assemblyConfig.size,
@@ -467,7 +461,7 @@ export default class Interpreter {
                 this.image[0].render(hatch, tile.center);
             }
         }
-        else if (assemblyConfig.mix === "hatching") {
+        else if (assemblyConfig.type === "hatching") {
             let maxCount = util.amax(this.tiles.map(tile => tile.maxValue()));
             this.classBuffers.forEach((derivedBuffer: ClassBuffer, i: number) => {
                 // Ugly side effect, should pass dataValues to Composer.hatch instead
@@ -495,7 +489,7 @@ export default class Interpreter {
                 this.image[0].render(hatch, tile.center);
             }
         }
-        else if (assemblyConfig.mix === "glyph") {
+        else if (assemblyConfig.type === "glyph") {
             let maxCount = util.amax(this.tiles.map(tile => tile.maxValue()));
             let glyphSpec = assemblyConfig.glyphSpec!;
 
@@ -527,7 +521,7 @@ export default class Interpreter {
                     if (tile.mask.width < width
                         || tile.mask.height < height) continue;
 
-                    let promise = Assembly.bars(this.classBuffers, this.bufferNames, tile.dataValues, {
+                    let promise = Assembly.bars(this.classBuffers, tile.dataValues, {
                         width: glyphSpec.width,
                         height: glyphSpec.height,
                         'y.scale.domain': this.scale.domain as [number, number],
@@ -582,10 +576,10 @@ export default class Interpreter {
             this.log('No assembly');
 
         let render = () => {
-            let options:any = {};
+            let options: any = {};
 
-            if (assemblyConfig.mix === "time") {
-                options.interval = assemblyConfig.interval;
+            if (assemblyConfig.type === "time") {
+                options.interval = assemblyConfig.duration;
                 options.wrapper = wrapper;
             }
 
